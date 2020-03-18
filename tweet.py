@@ -14,24 +14,40 @@ startDate = "2020-01-31"
 endDate = (date.today() + timedelta(days=1)).strftime('%Y-%m-%d')
 
 # main health agencies for selected countries
-users_dict = {'IT':"DPCgov", 
-              "UK":"DHSCgovuk", 
-              "DE":"rki_de", 
-              "ES":"SaludPublicaEs",
-              # "ES_v2":"sanidadgob",
-              "FR":"MinSoliSante",
-              "US":"CDCgov", 
-              "AU":"healthgovau",
-              "NZ":"minhealthnz",
-              "CA":"GovCanHealth",
-              "CH":"BAG_OFSP_UFSP",
-              "IN":"MoHFW_INDIA",
-              "SE":"Folkhalsomynd",
-              "KR":"TheKoreaHerald",
-              "CN":"PDChina",
-              # "CN-HK":"SCMPNews",  # bad source
-              # "JA":"japantimes",   # bad source
+health_dict = {'IT':"DPCgov", 
+               "UK":"DHSCgovuk", 
+               "DE":"rki_de", 
+               "ES":"SaludPublicaEs",
+               # "ES_v2":"sanidadgob",
+               "FR":"MinSoliSante",
+               "US":"CDCgov", 
+               "AU":"healthgovau",
+               "NZ":"minhealthnz",
+               "CA":"GovCanHealth",
+               "CH":"BAG_OFSP_UFSP",
+               "IN":"MoHFW_INDIA",
+               "SE":"Folkhalsomynd",
+               "KR":"TheKoreaHerald",
+               "CN":"PDChina",
+               # "CN-HK":"SCMPNews",  # bad source
+               # "JA":"japantimes",   # bad source
               }  
+gov_dict = {'IT':"Palazzo_Chigi",
+            'UK':"10DowningStreet",
+            "DE":"RegSprecher",
+            "ES":"desdelamoncloa",
+            'FR':"Elysee",
+            "US":"whitehouse",
+            "AU":"ScottMorrisonMP",
+            "NZ":"govtnz",
+            "CA":"CanadianPM",
+            "CH":"BR_Sprecher",
+            "IN":"narendramodi",
+            "SE":"swedense",
+            "KR":"TheBlueHouseENG",   # TheBlueHouseKR
+            "CN":None,
+            "JA":"JPN_PMO"}
+
 # mycountries =  ['ES']
 # users_dict = dict([(key, users_dict[key]) for key in mycountries])
 
@@ -79,7 +95,7 @@ pressrel_dict = {'IT':['diretta', 'aggiornamento', 'aggiornamenti',
                  "AU":["update"],
                  "NZ":["update"],
                  "CA":["update", "broadcast", "live"],
-                 "CH":["CoronaInfoCH", "bilan actuel"],
+                 "CH":["CoronaInfoCH", "bilan actuel", "point de presse", "live"],
                  "IN":["CoronaVirusUpdates"],
                  "SE":["Uppdaterade", "pressträff"],
                  "KR":['breaking', 'coronavirusupdates'],

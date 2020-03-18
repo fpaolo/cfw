@@ -13,12 +13,114 @@ import pandas as pd
 startDate = "2020-01-31"
 endDate = (date.today() + timedelta(days=1)).strftime('%Y-%m-%d')
 
+tweet_dict = {'IT':{'health':"DPCgov", 
+                    "gov":"Palazzo_Chigi"},
+              "UK":{'health':"DHSCgovuk",
+                     "gov":"10DowningStreet"},
+              "DE":{'health':"rki_de", 
+                    "gov":"RegSprecher"},
+              "ES":{'health':"SaludPublicaEs",
+                    "gov": "desdelamoncloa"},        
+              "FR":{'health':"MinSoliSante",
+                    "gov":"Elysee"},
+              "US":{'health':"CDCgov",
+                    "gov":"whitehouse"},
+              "AU":{'health':"healthgovau",
+                    "gov":"ScottMorrisonMP"},
+              "NZ":{'health':"minhealthnz",
+                    "gov":"govtnz"},
+              "CA":{'health':"GovCanHealth",
+                    "gov":"CanadianPM"},
+              "CH":{'health':"BAG_OFSP_UFSP",
+                    "gov":"BR_Sprecher"},
+              "IN":{'health':"MoHFW_INDIA",
+                    "gov":"narendramodi"},
+              "SE":{'health':"Folkhalsomynd",
+                    "gov":"swedense"},
+              "KR":{'health':"TheKoreaHerald",
+                    "gov":"TheBlueHouseENG"},
+              "CN":{'health':"PDChina",
+                    "gov":None},
+              "CN-HK":{"health":,
+                       "gov":None}
+              "JA":{'health':None,
+                    "gov":"JPN_PMO"}}
+
+class TweetOfficialCovid:
+    """ A"""
+    def __init__(self, countryCode, twitterHealth, twitterGov):
+        self.country = countryCode
+        self.health = twitterHealth
+        self.gov = twitterGov
+
+    def getTweet(self, 
+                 startDate = "2020-01-31", 
+                 endDate = (date.today() + timedelta(days=1)).strftime('%Y-%m-%d')):
+        tweets = dict.fromkeys(['health', 'gov'])
+        for k, u in zip(tweets.keys(), [self.health, self.gov]):
+            tweetCriteria = got.manager.TweetCriteria().setUsername(u)\
+                                                       .setSince(startDate)\
+                                                       .setUntil(endDate)
+            tweets[k] = got.manager.TweetManager.getTweets(tweetCriteria)
+        return tweets
+
+    def filterTweets(self, keywords):
+        """ Retain only tweets that contain at least a keyword """
+        
+        # 1. filter for hashtags without '#' since look at tweet TEXT
+        #  all matches are case-INsensitive 
+        hashtags = ["coronavirus", "covid19", "covid-19", "covid",
+                    "COVIDー19"]
+            tweets_dict_f[k] = match_tweet_text(v, hashtags) 
+
+        # 2. filter tweet TEXT for press-briefing 
+        #  all matches are case-INsensitive
+        pressrel_dict = {'IT':['diretta', 'aggiornamento', 'aggiornamenti',
+                            'conferenza', 'news', 'press-release',
+                            'update'], 
+                        "UK":['update', 'testing'], 
+                        "DE":['pressebriefing', 'aktuelle'], 
+                        "ES":['casos', 'actualizados'],
+                        "ES_v2":['información', 'actualizada'],
+                        "FR":['direct', "Point de situation"],
+                        "US":['briefing'],
+                        "AU":["update"],
+                        "NZ":["update"],
+                        "CA":["update", "broadcast", "live"],
+                        "CH":["CoronaInfoCH", "bilan actuel", "point de presse", "live"],
+                        "IN":["CoronaVirusUpdates"],
+                        "SE":["Uppdaterade", "pressträff"],
+                        "KR":['breaking', 'coronavirusupdates'],
+                        "CN":['Chinese mainland']}  
+        for k, v in tweets_dict_f.items():
+            tweets_dict_f[k] = match_tweet_text(v, pressrel_dict[k])        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+               # "ES_v2":"sanidadgob",
+
+
+
 # main health agencies for selected countries
 health_dict = {'IT':"DPCgov", 
                "UK":"DHSCgovuk", 
                "DE":"rki_de", 
                "ES":"SaludPublicaEs",
-               # "ES_v2":"sanidadgob",
                "FR":"MinSoliSante",
                "US":"CDCgov", 
                "AU":"healthgovau",

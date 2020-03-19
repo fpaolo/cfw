@@ -1,10 +1,10 @@
 import GetOldTweets3 as got
 import re
 from datetime import date, timedelta
-from functions import match_tweets_hashtags, match_tweet_text
+from functions import TweetsOfficial, QueryTweets
 import pickle
 import pandas as pd 
-
+import translate
 # =======================================
 #      DOWNLOAD and STORE TWEETS
 # =======================================
@@ -41,62 +41,45 @@ tweet_dict = {'IT':{'health':"DPCgov",
                     "gov":"TheBlueHouseENG"},
               "CN":{'health':"PDChina",
                     "gov":None},
-              "CN-HK":{"health":,
-                       "gov":None}
+              "CN-HK":{"health":None,
+                       "gov":None},
               "JA":{'health':None,
                     "gov":"JPN_PMO"}}
+pressrel_dict = {'IT':['diretta', 'aggiornamento', 'aggiornamenti',
+                       'conferenza', 'news', 'press-release',
+                       'update'], 
+                 "UK":['update', 'testing'], 
+                 "DE":['pressebriefing', 'aktuelle'], 
+                 "ES":['casos', 'actualizados'],
+                 "ES_v2":['información', 'actualizada'],
+                 "FR":['direct', "Point de situation"],
+                 "US":['briefing'],
+                 "AU":["update"],
+                 "NZ":["update"],
+                 "CA":["update", "broadcast", "live"],
+                 "CH":["CoronaInfoCH", "bilan actuel", "point de presse", "live"],
+                 "IN":["CoronaVirusUpdates"],
+                 "SE":["Uppdaterade", "pressträff"],
+                 "KR":['breaking', 'coronavirusupdates'],
+                 "CN":['Chinese mainland']}  
 
+country = 'FR'
+country_dict = tweet_dict[country]
+IT_tweets = QueryTweets(country, 
+                        country_dict['health'], 
+                        country_dict['gov'])
+tweets = IT_tweets.getTweets("2020-03-08", "2020-03-15")
+tweetf = tweets.filterTweets(pressrel_dict[country])
+df_tweet = tweetf.createDataFrame()
+df_tweet.to_csv("ita_tweet.csv", sep=';', index=False,
+                encoding='utf-8')
 
+[t.text for t in tweets.gov[3:8]]
 
-    def filterTweets(self, tweet):
-        """ Retain only tweets that contain at least one of the keywords """
-        
-        # 1. filter for hashtags without '#' since look at tweet TEXT
-        #  all matches are case-INsensitive 
-        hashtags = ["coronavirus", "covid19", "covid-19", "covid",
-                    "COVIDー19"]
-        tweets_dict_f[k] = match_tweet_text(v, hashtags) 
+from functions import match_tweet_text
+matches = match_tweet_text(tweets.gov[3:8],pressrel_dict['IT'] )
 
-        # 2. filter tweet TEXT for press-briefing 
-        #  all matches are case-INsensitive
-        pressrel_dict = {'IT':['diretta', 'aggiornamento', 'aggiornamenti',
-                            'conferenza', 'news', 'press-release',
-                            'update'], 
-                        "UK":['update', 'testing'], 
-                        "DE":['pressebriefing', 'aktuelle'], 
-                        "ES":['casos', 'actualizados'],
-                        "ES_v2":['información', 'actualizada'],
-                        "FR":['direct', "Point de situation"],
-                        "US":['briefing'],
-                        "AU":["update"],
-                        "NZ":["update"],
-                        "CA":["update", "broadcast", "live"],
-                        "CH":["CoronaInfoCH", "bilan actuel", "point de presse", "live"],
-                        "IN":["CoronaVirusUpdates"],
-                        "SE":["Uppdaterade", "pressträff"],
-                        "KR":['breaking', 'coronavirusupdates'],
-                        "CN":['Chinese mainland']}  
-        for k, v in tweets_dict_f.items():
-            tweets_dict_f[k] = match_tweet_text(v, pressrel_dict[k])        
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-               # "ES_v2":"sanidadgob",
+is_match(tweets.gov[4].text, pressrel_dict['IT'])
 
 
 

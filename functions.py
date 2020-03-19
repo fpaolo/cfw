@@ -1,9 +1,9 @@
 import GetOldTweets3 as got
 import re
 from datetime import date, timedelta
- 
+import pandas as pd
 
-class TweetOfficial:
+class TweetsOfficial:
     """ A class to store tweets """ 
     def __init__(self, country, health, gov):
         self.country = country
@@ -23,24 +23,37 @@ class TweetOfficial:
         for a in attrs:
             tweets = getattr(self, a)
             tweets_f1 = match_tweet_text(tweets, hashtags)
-            tweets_f2 = match_tweet_text(tweets_f1, hashtags)
+            tweets_f2 = match_tweet_text(tweets_f1, keywords)
             lmatch.append(tweets_f2)
 
-        Tweet = TweetOfficial(self.country,
-                              health = lmatch[0],
-                              gov = lmatch[1])
+        Tweet = TweetsOfficial(self.country,
+                               health = lmatch[0],
+                               gov = lmatch[1])
         return Tweet
 
+    def createDataFrame(self):
+        """ Create dataframe of tweets """
+        dfs = []
+        attrs = ['health', 'gov']
+        for a in attrs:
+            tweets = getattr(self, a)
+            df = pd.DataFrame()
+            df['time'] = [t.date for t in tweets]
+            df['text'] = [t.text for t in tweets]
+            df['tweet_source'] = a
+            df['country'] = self.country
+            dfs.append(df)
+        df_tweet = pd.concat(dfs, 0)
+        return df_tweet
 
-class TweetOfficialCovid:
+
+class QueryTweets:
     """ A class to query tweets """
     def __init__(self, countryCode, userHealth, 
-                 userGov, 
-                 keywords = None):
+                 userGov):
         self.country = countryCode
-        self.health = twitterHealth
-        self.gov = twitterGov
-        self.keywords = keywords
+        self.health = userHealth
+        self.gov = userGov
 
     def getTweets(self, 
                   startDate = "2020-01-31", 
@@ -50,11 +63,15 @@ class TweetOfficialCovid:
             tweetCriteria = got.manager.TweetCriteria().setUsername(u)\
                                                        .setSince(startDate)\
                                                        .setUntil(endDate)
-            tweets.append(got.manager.TweetManager.getTweets(tweetCriteria))
+            if u is not None:
+                tweet = got.manager.TweetManager.getTweets(tweetCriteria)
+            else:
+                tweet = None
+            tweets.append(tweet)
 
-        Tweet = TweetOfficial(self.country, 
-                              health=tweets[0],
-                              gov=tweets[1])
+        Tweet = TweetsOfficial(self.country, 
+                               health=tweets[0],
+                               gov=tweets[1])
         return Tweet
 
 def match_tweets_hashtags(tweets, hashtags):

@@ -46,32 +46,16 @@ tweet_dict = {'IT':{'health':"DPCgov",
               "JA":{'health':None,
                     "gov":"JPN_PMO"}}
 
-class TweetOfficialCovid:
-    """ A"""
-    def __init__(self, countryCode, twitterHealth, twitterGov):
-        self.country = countryCode
-        self.health = twitterHealth
-        self.gov = twitterGov
 
-    def getTweet(self, 
-                 startDate = "2020-01-31", 
-                 endDate = (date.today() + timedelta(days=1)).strftime('%Y-%m-%d')):
-        tweets = dict.fromkeys(['health', 'gov'])
-        for k, u in zip(tweets.keys(), [self.health, self.gov]):
-            tweetCriteria = got.manager.TweetCriteria().setUsername(u)\
-                                                       .setSince(startDate)\
-                                                       .setUntil(endDate)
-            tweets[k] = got.manager.TweetManager.getTweets(tweetCriteria)
-        return tweets
 
-    def filterTweets(self, keywords):
-        """ Retain only tweets that contain at least a keyword """
+    def filterTweets(self, tweet):
+        """ Retain only tweets that contain at least one of the keywords """
         
         # 1. filter for hashtags without '#' since look at tweet TEXT
         #  all matches are case-INsensitive 
         hashtags = ["coronavirus", "covid19", "covid-19", "covid",
                     "COVIDー19"]
-            tweets_dict_f[k] = match_tweet_text(v, hashtags) 
+        tweets_dict_f[k] = match_tweet_text(v, hashtags) 
 
         # 2. filter tweet TEXT for press-briefing 
         #  all matches are case-INsensitive

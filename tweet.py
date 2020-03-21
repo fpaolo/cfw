@@ -1,10 +1,11 @@
 import GetOldTweets3 as got
 import re
 from datetime import date, timedelta
-from functions import TweetsOfficial, QueryTweets
+from functions import downloadTweets, loadpklTweets
+from functions import filter2DataFrame 
 import pickle
 import pandas as pd 
-import translate
+
 # =======================================
 #      DOWNLOAD and STORE TWEETS
 # =======================================
@@ -13,179 +14,141 @@ import translate
 startDate = "2020-01-31"
 endDate = (date.today() + timedelta(days=1)).strftime('%Y-%m-%d')
 
-tweet_dict = {'IT':{'health':"DPCgov", 
-                    "gov":"Palazzo_Chigi"},
-              "UK":{'health':"DHSCgovuk",
-                     "gov":"10DowningStreet"},
-              "DE":{'health':"rki_de", 
-                    "gov":"RegSprecher"},
-              "ES":{'health':"SaludPublicaEs",
-                    "gov": "desdelamoncloa"},        
-              "FR":{'health':"MinSoliSante",
-                    "gov":"Elysee"},
-              "US":{'health':"CDCgov",
-                    "gov":"whitehouse"},
-              "AU":{'health':"healthgovau",
-                    "gov":"ScottMorrisonMP"},
-              "NZ":{'health':"minhealthnz",
-                    "gov":"govtnz"},
-              "CA":{'health':"GovCanHealth",
-                    "gov":"CanadianPM"},
-              "CH":{'health':"BAG_OFSP_UFSP",
-                    "gov":"BR_Sprecher"},
-              "IN":{'health':"MoHFW_INDIA",
-                    "gov":"narendramodi"},
-              "SE":{'health':"Folkhalsomynd",
-                    "gov":"swedense"},
-              "KR":{'health':"TheKoreaHerald",
-                    "gov":"TheBlueHouseENG"},
-              "CN":{'health':"PDChina",
-                    "gov":None},
-              "CN-HK":{"health":None,
-                       "gov":None},
-              "JA":{'health':None,
-                    "gov":"JPN_PMO"}}
-pressrel_dict = {'IT':['diretta', 'aggiornamento', 'aggiornamenti',
-                       'conferenza', 'news', 'press-release',
-                       'update'], 
-                 "UK":['update', 'testing'], 
-                 "DE":['pressebriefing', 'aktuelle'], 
-                 "ES":['casos', 'actualizados'],
-                 "ES_v2":['información', 'actualizada'],
-                 "FR":['direct', "Point de situation"],
-                 "US":['briefing'],
-                 "AU":["update"],
-                 "NZ":["update"],
-                 "CA":["update", "broadcast", "live"],
-                 "CH":["CoronaInfoCH", "bilan actuel", "point de presse", "live"],
-                 "IN":["CoronaVirusUpdates"],
-                 "SE":["Uppdaterade", "pressträff"],
-                 "KR":['breaking', 'coronavirusupdates'],
-                 "CN":['Chinese mainland']}  
+hlt_users = {'IT':"DPCgov", 
+             "UK":"DHSCgovuk", 
+             "DE":"rki_de", 
+             "ES":"SaludPublicaEs",
+             "FR":"MinSoliSante",
+             "US":"CDCgov", 
+             "AU":"healthgovau",
+             "NZ":"minhealthnz",
+             "CA":"GovCanHealth",
+             "CH":"BAG_OFSP_UFSP",
+             "IN":"MoHFW_INDIA",
+             "SE":"Folkhalsomynd",
+             "KR":"TheKoreaHerald",
+             "CN":"PDChina",
+            #  "CN-HK":None,  # "SCMPNews"
+            #  "JA":None,   #"japantimes"
+            } 
+gov_users = {'IT':"Palazzo_Chigi",
+             'UK':"10DowningStreet",
+             "DE":"RegSprecher",
+             "ES":"desdelamoncloa",
+             'FR':"Elysee",
+             "US":"whitehouse",
+             "AU":"ScottMorrisonMP",
+             "NZ":"govtnz",
+             "CA":"CanadianPM",
+             "CH":"BR_Sprecher",
+             "IN":"narendramodi",
+             "SE":"swedense",
+             "KR":"TheBlueHouseENG",   # TheBlueHouseKR
+            #  "CN":None,
+            #  "CN-HK":None,
+             "JA":"JPN_PMO"}
 
-country = 'FR'
-country_dict = tweet_dict[country]
-IT_tweets = QueryTweets(country, 
-                        country_dict['health'], 
-                        country_dict['gov'])
-tweets = IT_tweets.getTweets("2020-03-08", "2020-03-15")
-tweetf = tweets.filterTweets(pressrel_dict[country])
-df_tweet = tweetf.createDataFrame()
-df_tweet.to_csv("ita_tweet.csv", sep=';', index=False,
-                encoding='utf-8')
+# # download tweets
+# hlt_tweetsObjs = downloadTweets(hlt_users, 'health')
+# gov_tweetsObjs = downloadTweets(gov_users, 'gov')
 
-[t.text for t in tweets.gov[3:8]]
-
-from functions import match_tweet_text
-matches = match_tweet_text(tweets.gov[3:8],pressrel_dict['IT'] )
-
-is_match(tweets.gov[4].text, pressrel_dict['IT'])
+# # save tweets
+# saveAllTweets(hlt_tweetsObjs, gov_tweetsObjs)
 
 
+# ===================================
+#         HEALTH AGENCIES
+# ===================================    
+# create keywords to match relevant tweets (hopefully)        
+hlt_keys_ALL = {'IT':['diretta'], 
+                "UK":['update', 'testing'], 
+                "DE":['pressebriefing', 'aktuelle'], 
+                "ES":['casos', 'actualizados'],
+                "FR":['direct', "Point de situation"],
+                "US":['briefing'],
+                "AU":["update"],
+                "NZ":["update"],
+                "CA":["update", "broadcast", "live"],
+                "CH":["CoronaInfoCH", "bilan actuel"],
+                "IN":["CoronaVirusUpdates"],
+                "SE":["Uppdaterade", "pressträff"],
+                "KR":['breaking'],
+                "CN":['Chinese mainland'],
+                # "CN-HK":None,
+                # "JA":None
+                }  
+hlt_keys_ANY = hlt_keys_ALL
+hlt_match_covid = dict.fromkeys(hlt_users)
+for k in hlt_match_covid.keys():
+    hlt_match_covid[k] = True
 
-# main health agencies for selected countries
-health_dict = {'IT':"DPCgov", 
-               "UK":"DHSCgovuk", 
-               "DE":"rki_de", 
-               "ES":"SaludPublicaEs",
-               "FR":"MinSoliSante",
-               "US":"CDCgov", 
-               "AU":"healthgovau",
-               "NZ":"minhealthnz",
-               "CA":"GovCanHealth",
-               "CH":"BAG_OFSP_UFSP",
-               "IN":"MoHFW_INDIA",
-               "SE":"Folkhalsomynd",
-               "KR":"TheKoreaHerald",
-               "CN":"PDChina",
-               # "CN-HK":"SCMPNews",  # bad source
-               # "JA":"japantimes",   # bad source
-              }  
-gov_dict = {'IT':"Palazzo_Chigi",
-            'UK':"10DowningStreet",
-            "DE":"RegSprecher",
-            "ES":"desdelamoncloa",
-            'FR':"Elysee",
-            "US":"whitehouse",
-            "AU":"ScottMorrisonMP",
-            "NZ":"govtnz",
-            "CA":"CanadianPM",
-            "CH":"BR_Sprecher",
-            "IN":"narendramodi",
-            "SE":"swedense",
-            "KR":"TheBlueHouseENG",   # TheBlueHouseKR
-            "CN":None,
-            "JA":"JPN_PMO"}
+# load tweets
+hlt_tweetsObjs = loadpklTweets(hlt_users.keys(), 'health')
 
-# mycountries =  ['ES']
-# users_dict = dict([(key, users_dict[key]) for key in mycountries])
-
-tweets_dicts = dict.fromkeys(users_dict.keys())
-for k, v in users_dict.items():
-    tweetCriteria = got.manager.TweetCriteria().setUsername(v)\
-                                               .setSince(startDate)\
-                                               .setUntil(endDate)
-    tweets_dicts[k] = got.manager.TweetManager.getTweets(tweetCriteria)
-
-# save tweets to disk 
-for k, v in tweets_dicts.items():
-    fname = f"tweets_{k}.pkl"   
-    with open(fname, 'wb') as f:
-        pickle.dump(v, f)
-
-# =======================================
-#      PARSE TWEETS for COVID-19
-# =======================================
-# load tweets from disk
-for k in tweets_dicts.keys():
-    fname = f"tweets_{k}.pkl"   
-    with open(fname, 'rb') as f:
-        tweets_dicts[k] = pickle.load(f)
-
-# 1. filter for hashtags without '#' since look at tweet TEXT
-#  all matches are case-INsensitive 
-hashtags = ["coronavirus", "covid19", "covid-19", "covid",
-            "COVIDー19"]
-tweets_dict_f = dict.fromkeys(users_dict.keys())
-for k, v in tweets_dicts.items():
-    tweets_dict_f[k] = match_tweet_text(v, hashtags) 
-
-# 2. filter tweet TEXT for press-briefing 
-#  all matches are case-INsensitive
-pressrel_dict = {'IT':['diretta', 'aggiornamento', 'aggiornamenti',
-                       'conferenza', 'news', 'press-release',
-                       'update'], 
-                 "UK":['update', 'testing'], 
-                 "DE":['pressebriefing', 'aktuelle'], 
-                 "ES":['casos', 'actualizados'],
-                 "ES_v2":['información', 'actualizada'],
-                 "FR":['direct', "Point de situation"],
-                 "US":['briefing'],
-                 "AU":["update"],
-                 "NZ":["update"],
-                 "CA":["update", "broadcast", "live"],
-                 "CH":["CoronaInfoCH", "bilan actuel", "point de presse", "live"],
-                 "IN":["CoronaVirusUpdates"],
-                 "SE":["Uppdaterade", "pressträff"],
-                 "KR":['breaking', 'coronavirusupdates'],
-                 "CN":['Chinese mainland']}  
-for k, v in tweets_dict_f.items():
-    tweets_dict_f[k] = match_tweet_text(v, pressrel_dict[k])       
+# filter tweets
+df_hlt = filter2DataFrame(hlt_tweetsObjs, hlt_keys_ANY,
+                          hlt_keys_ALL, hlt_match_covid)
 
 
-# =======================================
-#         CREATE TWEETS DATASET
-# =======================================
-# collapse in data.frame
-dfs = []
-for k, v, in tweets_dict_f.items():
-    df = pd.DataFrame()
-    df['time'] = [t.date for t in v]
-    df['text'] = [t.text for t in v]
-    df['country'] = k
-    dfs.append(df)
-df_tweet = pd.concat(dfs, 0)
-df_tweet.to_csv("df_tweet.csv", sep=';', index=False,
-                encoding='utf-8')
+# =================================================
+#               GOVERNMENT
+# ================================================ 
+# create keywords to match relevant tweets (hopefully)        
+gov_keys_ANY = {'IT':['diretta', 'live', 'broadcast'], 
+                "UK":['watch live'], 
+                "DE":['konferenz'], 
+                "ES":['live', 'directo'],
+                "FR":['direct', "Point de situation","adresse"],
+                "US":['live', 'press','briefing'],
+                "AU":["update"],
+                "NZ":["update"],
+                "CA":["update", "broadcast", "live"],
+                "CH":["stampa"],
+                "IN":["CoronaVirusUpdates"],
+                "SE":["Uppdaterade", "pressträff"],
+                "KR":['breaking'],
+                # "CN":None,
+                # "CN-HK":None,
+                "JA":['update']}  
+# gov_keys_ANY = dict.fromkeys(gov_users)
+# for k in gov_keys_ANY.keys():
+#     gov_keys_ANY[k] = ['update', 'briefing', 'live', 'watch',
+#                        'broadcast', 'direct', 'directo',
+#                        'pressbriefing']   
+gov_keys_ALL = dict.fromkeys(gov_users)
+for k in gov_keys_ALL.keys():
+    gov_keys_ALL[k] = None
+#gov_keys_ALL = gov_keys_ANY
+gov_match_covid = dict.fromkeys(gov_users)
+for k in gov_match_covid.keys():
+    gov_match_covid[k] = True
+gov_match_covid['IT'] = False
+gov_match_covid['AU'] = False
+gov_match_covid['IN'] = False
+gov_match_covid['SE'] = False
+
+# load tweets
+gov_tweetsObjs = loadpklTweets(gov_users.keys(), 'gov')
+
+# filter tweets
+df_gov = filter2DataFrame(gov_tweetsObjs, gov_keys_ANY,
+                          gov_keys_ALL, gov_match_covid)
 
 
+# final df
+df = pd.concat((df_gov, df_hlt))
+df.to_csv("df_tweet2.csv", sep=';', index=False,
+          encoding='utf-8')
+
+user = "NewIndianXpress"
+tweetCriteria = got.manager.TweetCriteria().setUsername(user)\
+                                           .setSince("2020-02-01")\
+                                           .setUntil("2020-04-30")\
+                                           .setQuerySearch("CoronavirusOutbreakindia")
+tweets = got.manager.TweetManager.getTweets(tweetCriteria)
+IN_tweets = pd.DataFrame()
+IN_tweets['time'] = [t.date for t in tweets]
+IN_tweets['text'] = [t.text for t in tweets]
+IN_tweets['retweets'] = [t.retweets for t in tweets]
+IN_tweets.to_csv('TOI_IN.csv', sep=';', index=False,
+                 encoding='utf-8')

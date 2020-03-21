@@ -1,3 +1,12 @@
+# directory and non-essential files
+.old/
+db/
+csv/
+*.csv
+*.xlsx
+sqlite3.def
+sqlite3.dll
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

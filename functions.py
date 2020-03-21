@@ -1,10 +1,10 @@
 import GetOldTweets3 as got
 import re
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime, timezone
 import pandas as pd
 import pickle
-
-
+import os 
+import sqlite3
 
 def saveAllTweets(hlt_tweetsObjs, gov_tweetsObjs):
     tweetsObjs = []
@@ -35,8 +35,8 @@ def filter2DataFrame(tweetObjs, dkeys_ANY, dkeys_ALL,
 
 def downloadTweets(dict_users, 
                    twtype,
-                   startDate='2020-01-01',
-                   endDate='2020-03-20'):
+                   startDate,
+                   endDate):
     tweetsObjs = []
     for k, u in dict_users.items():
         tweetCriteria = got.manager.TweetCriteria().setUsername(u)\
@@ -92,20 +92,26 @@ class TweetsOfficial:
 
     def savepklTweets(self, fname=None):
         if fname is None:
+            if not os.path.exists('./pkl'):
+                os.mkdir('./pkl')
             fname = f"{self.country}_{self.type}.pkl"   
+            fname = os.path.join('pkl', fname)
         with open(fname, 'wb') as f:
             pickle.dump(self.tweets, f)
     
 def loadpklTweets(countries, twtype):
     twObjs = []
     for c in countries:
-        fname = f"{c}_{twtype}.pkl"   
+        fname = f"{c}_{twtype}.pkl"  
+        fname = os.path.join('pkl', fname) 
         with open(fname, 'rb') as f:
             tweets = pickle.load(f)
         twObjs.append(TweetsOfficial(c, tweets, twtype))
     return twObjs
 
 
+
+    
 # class QueryTweets:
 #     """ A class to query tweets """
 #     def __init__(self, countryCode, 

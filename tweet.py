@@ -1,6 +1,6 @@
 import GetOldTweets3 as got
 import re
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime, timezone
 from functions import downloadTweets, loadpklTweets
 from functions import filter2DataFrame 
 import pickle
@@ -134,6 +134,15 @@ gov_tweetsObjs = loadpklTweets(gov_users.keys(), 'gov')
 df_gov = filter2DataFrame(gov_tweetsObjs, gov_keys_ANY,
                           gov_keys_ALL, gov_match_covid)
 
+
+
+import os 
+if not os.path.exists('./pkl'):
+    os.mkdir('./pkl')
+    print('evvva')
+
+os.path.
+os.mkdir('./pkl/mydir')
 
 # final df
 df = pd.concat((df_gov, df_hlt))

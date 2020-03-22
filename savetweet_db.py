@@ -1,9 +1,10 @@
 from datetime import date, timedelta, datetime, timezone
-from functions import downloadTweets, filter2DataFrame
+from TweetsOfficial import downloadTweets, filter2DataFrame
 from storeTweets import TweetsStorage
+from twitterUsers import TwitterInfo
+from functions import seqDates, format_dates_HHMM, makeDFfromDates
 import pandas as pd 
 from os import path, mkdir 
-from twitterUsers import TwitterInfo
 
 # all dates are in UTC
 # 'endDate' not included
@@ -41,12 +42,45 @@ gov_keys_ALL = TwitterInfo.gov_keys_ALL
 gov_match_covid = TwitterInfo.gov_match_covid
 df_gov = filter2DataFrame(gov_tweetsObjs, gov_keys_ANY,
                           gov_keys_ALL, gov_match_covid)
+
+# cat in a unique df with right structure
 df = pd.concat((df_hlt, df_gov), 0)
+df['measures'] = ""
+df = df[['time', 'text', "measures", 'tweet_source', 'country']]
+
+# manually add US and CN-HK data
+# ========== US CDC =========
+#  dates from https://www.cdc.gov/coronavirus/2019-ncov/cases-updates/cases-in-us.html?CDC_AA_refVal=https%3A%2F%2Fwww.cdc.gov%2Fcoronavirus%2F2019-ncov%2Fcases-in-us.html
+#This page will be updated regularly at noon Mondays 
+# through Fridays. Numbers close out at 4 p.m. 
+# the day before reporting.
+dates = seqDates(startDate, endDate)
+dates_us = format_dates_HHMM(dates, 12, 0, -4)
+dates_us = [d for d in dates_us if d.isoweekday() not in [6, 7]]
+df_us = makeDFfromDates(dates_us, 'US', 'cdc website')
+
+
+# ====== CN-HK =========
+# '''I checked Hong Kong CHP's website, and the dashboard 
+#    and the pdf version (https://www.chp.gov.hk/files/pdf/local_situation_covid19_en.pdf) 
+#    is updated at 4pm (HK time) every day. 
+#    At 4:30pm of each day, CHP holds a press briefing 
+#    session to explain the latest situation to the public
+#    and media. '''
+# dashboard update
+dates_cnhk_du = format_dates_HHMM(dates, 16, 0, 8)
+df_cnhk_du = makeDFfromDates(dates_cnhk_du, 'CN-HK', 'dashboard update')
+# press release
+dates_cnhk_pr = format_dates_HHMM(dates, 16, 30, 8)
+df_cnhk_pr = makeDFfromDates(dates_cnhk_pr, 'CN-HK', 'press release')
+df_cnhk = pd.concat((df_cnhk_du, df_cnhk_pr))
+
+# final dataset
+df = pd.concat((df, df_us, df_cnhk), 0)
+
 
 # output to csv to be checked manually 
 # add column 'measures' for quarantine news etc
-df['measures'] = ""
-df = df[['time', 'text', "measures", 'tweet_source', 'country']]
 if not path.isdir('./csv'):
     mkdir('./csv')
 fname = path.join('csv', 'tweets_original.csv')

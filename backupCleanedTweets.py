@@ -1,11 +1,12 @@
 import pandas as pd
 from datetime import timedelta, datetime, timezone
 from storeTweets import TweetsStorage
+from os import path, mkdir
 
-df_csv = pd.read_csv('tweets_clean.csv', sep=';')
+df_csv = pd.read_csv('./csv/tweets_checked.csv', sep=';')
 
 # convert all dates to UTC
-# WARNING!!! excel dates are from my local which is utc+1
+# WARNING!!! excel dates are from my locale which is utc+1
 df_csv['time'] = df_csv['time'] + '+0100'
 times = df_csv['time'].to_list()
 times = [datetime.strptime(t, "%d/%m/%Y %H:%M%z") for t in times]
@@ -22,6 +23,15 @@ df_csv['timestamp'] = tstamp
 stObj = TweetsStorage()
 stObj.saveCleanTweetsToSql(df_csv)
 
+# downloads the full dataset and outputs a csv
+df_all = stObj.loadCleanTweetsFromSql()
+if not path.isdir('./csv_out'):
+    mkdir('csv_out')
+df_all.sort_values(['country', 'time'], ascending=False,
+                    inplace=True)
+df_all.to_csv(path.join('csv_out', 'covid19_allnews.csv'), 
+              sep=';', index=False,
+              encoding='utf-8')
 
 
 # # add CN-HK covid19 status reports according to info
